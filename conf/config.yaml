@@ -1,0 +1,18 @@
+defaults:
+  - trainer: default.yaml
+  - datamodule: cifar10_datamodule.yaml
+  - model: cifar10_net.yaml
+  - logger: wandb.yaml
+  - hydra: default.yaml
+  - _self_
+
+work_dir: ${hydra:runtime.cwd}
+data_dir: ${work_dir}/${data_loc}/
+pred_save_path: ${work_dir}/${pred_save_loc}/
+
+# path to folder with data
+data_loc: data
+pred_save_loc: predictions
+eval_last_epoch_only: False
+val_names: ['CIFAR10_test']
+seed: 1
