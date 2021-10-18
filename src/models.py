@@ -84,8 +84,8 @@ class CIFAR10Module(pl.LightningModule):
 
         if dataloader_idx == 0:
             loss, accuracy = self.process_batch(batch)
-            self.log("loss/val", loss)
-            self.log("acc/val", accuracy)
+            self.log("loss/val", loss, add_dataloader_idx=False)
+            self.log("acc/val", accuracy, add_dataloader_idx=False)
         else:
             if self.is_eval_epoch():
                 preds_acc, labels = self.batch_preds(batch)
@@ -108,9 +108,9 @@ class CIFAR10Module(pl.LightningModule):
             df = pd.concat(output)
             df["index"] = np.arange(df.shape[0])
             df["epoch_step"] = str(self.current_epoch) + "," + str(self.global_step)
-            df["hash"] = cats["hash"].get_ind(self.hash)
-            df["seed"] = cats["seed"].get_ind(self.seed)
-            df["name"] = cats["name"].get_ind(self.val_names[idx])
+            df["hash"] = cats["hash"][self.hash]
+            df["seed"] = cats["seed"][self.seed]
+            df["name"] = cats["name"][self.val_names[idx]]
             df = df.sort_index(axis=1)
 
             if not os.path.isfile(loc):

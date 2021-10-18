@@ -4,7 +4,8 @@ from torch.utils.data import DataLoader
 from typing import Optional, List
 from torch.utils.data import Subset
 import numpy as np
-from src.utils import get_dataset
+from src.utils import get_dataset, cifar10_label_names
+import torch
 
 
 class CIFAR10DataModule(pl.LightningDataModule):
@@ -15,13 +16,18 @@ class CIFAR10DataModule(pl.LightningDataModule):
         data_dir: str = "./",
         batch_size: int = 128,
         n: Optional[int] = None,
+        label: Optional[str] = None,
         use_aug: bool = True,
         val_names: List[str] = [],
     ):
         super().__init__()
+        if label is not None:
+            assert(label in cifar10_label_names)
+
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.n = n
+        self.label = label
         self.use_aug = use_aug
         self.val_names = val_names
         self.mean = (0.4914, 0.4822, 0.4465)
@@ -50,8 +56,22 @@ class CIFAR10DataModule(pl.LightningDataModule):
             self.data_dir,
             CIFAR10DataModule.name,
             transform=self.train_transform,
-            train=True,
+            train=True
         )
+
+        val_set = get_dataset(
+            self.data_dir,
+            CIFAR10DataModule.name,
+            transform=self.test_transform,
+            train=False
+        )
+
+        if self.label is not None:
+            label_idx = cifar10_label_names.index(self.label)
+            full_train = Subset(
+                full_train, (torch.Tensor(full_train.targets) == label_idx).nonzero().flatten()
+            )
+            val_set = Subset(val_set, (torch.Tensor(val_set.targets) == label_idx).nonzero().flatten())
 
         if self.n is None:
             self.train_set = full_train
@@ -60,17 +80,11 @@ class CIFAR10DataModule(pl.LightningDataModule):
             self.train_set = Subset(full_train, rand_ind)
 
         self.val_sets = []
-        self.val_sets.append(
-            get_dataset(
-                self.data_dir,
-                CIFAR10DataModule.name,
-                transform=self.test_transform,
-                train=False,
-            )
-        )
-
+        self.val_sets.append(val_set)
+        
         for val_name in self.val_names:
             name, split = val_name.rsplit("_", 1)
+            assert(split in ["train", "test"])
             self.val_sets.append(
                 get_dataset(
                     self.data_dir,

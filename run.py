@@ -1,15 +1,17 @@
 import hydra
 from omegaconf import DictConfig
+from collections import OrderedDict
 
 from src.train import train
 from src.utils import (
+    add_to_odict,
     filter_config,
     get_dict_hash,
     get_class_name,
-    Categorizer,
     load_pickle,
     dump_pickle,
 )
+
 from pytorch_lightning import seed_everything
 import os
 
@@ -43,18 +45,18 @@ def main(config: DictConfig):
         cats = load_pickle(cats_fname)
     else:
         cats = {
-            "seed": Categorizer(),
-            "hash": Categorizer(),
-            "name": Categorizer(),
+            "seed": OrderedDict(),
+            "hash": OrderedDict(),
+            "name": OrderedDict(),
         }
 
-    cats["hash"].add(group_hash)
+    add_to_odict(cats["hash"], group_hash)
 
     for val_name in config.val_names:
-        cats["name"].add(val_name)
+        add_to_odict(cats["name"], val_name)
 
     config.seed = seed_everything()
-    cats["seed"].add(config.seed)
+    add_to_odict(cats["seed"], config.seed)
 
     dump_pickle(cats, cats_fname)
 

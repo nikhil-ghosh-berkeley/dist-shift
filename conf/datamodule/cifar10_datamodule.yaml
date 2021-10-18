@@ -3,5 +3,6 @@ _target_: src.datamodules.CIFAR10DataModule
 data_dir: ${data_dir} 
 val_names: ${val_names}
 batch_size: 128
-n: 10000
+n: null
 use_aug: True
+label: null

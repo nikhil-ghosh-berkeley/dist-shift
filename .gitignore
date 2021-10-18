@@ -1,16 +1,15 @@
 data/
 multirun/
 outputs/
-figures_*/
+figures*/
 predictions_*/
+test/
 __pycache__/
-sample/
 
 reconfig.py
 rehash.py
-sample_run.sh
 visualize.py
-plots.py
-grouping.py
 src/logs.py
-src/train_old.py
+scripts/job.sh
+scripts/run_frog.sh
+scripts/sample_run.sh

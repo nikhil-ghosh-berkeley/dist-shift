@@ -13,14 +13,4 @@ job_logging:
 
   disable_existing_loggers: false
 
-sweep:
-  dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  subdir: ${hydra.job.override_dirname}
-
-job:
-  config:
-    override_dirname:
-      exclude_keys:
-        - trials
-
 
