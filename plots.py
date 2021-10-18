@@ -3,7 +3,8 @@ from torchvision.datasets import CIFAR10
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from src.utils import cifar10_label_names, load_pickle
+from src.simple_utils import load_pickle
+from src.data_utils import cifar10_label_names
 
 osj = os.path.join
 

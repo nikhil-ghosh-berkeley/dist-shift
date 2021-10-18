@@ -1,8 +1,7 @@
-from pickle import dump
 import pandas as pd
 import numpy as np
 import os
-from src.utils import load_pickle, dump_pickle
+from src.simple_utils import load_pickle, dump_pickle
 from itertools import product
 import time
 from skfda import FDataGrid

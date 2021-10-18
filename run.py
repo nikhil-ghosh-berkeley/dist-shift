@@ -1,20 +1,16 @@
 import hydra
+import os
 from omegaconf import DictConfig
 from collections import OrderedDict
-
 from src.train import train
 from src.utils import (
     add_to_odict,
     filter_config,
     get_dict_hash,
     get_class_name,
-    load_pickle,
-    dump_pickle,
 )
-
+from src.simple_utils import load_pickle, dump_pickle
 from pytorch_lightning import seed_everything
-import os
-
 
 @hydra.main(config_path="conf/", config_name="config.yaml")
 def main(config: DictConfig):

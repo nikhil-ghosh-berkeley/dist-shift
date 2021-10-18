@@ -2,8 +2,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.metrics import Accuracy
 import torch
 from torch.nn.functional import softmax
-import pickle
-from src.utils import load_pickle
+from src.simple_utils import load_pickle
 from cifar10_models.Resnet import ResNet18
 from cifar10_models.Densenet import DenseNet121
 import pandas as pd

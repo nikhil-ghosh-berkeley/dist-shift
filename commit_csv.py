@@ -2,15 +2,14 @@ import pandas as pd
 import os
 import time
 from collections import OrderedDict
-from src.utils import load_pickle
-import sys
+import pickle
 
 osj = os.path.join
 preds_save_loc = "predictions_early_stopping_train/"
 
 print("start reading")
 read_start = time.time()
-cats = load_pickle(osj(preds_save_loc, "cats.pkl"))
+cats = pickle.load(open(osj(preds_save_loc, "cats.pkl"), "rb"))
 print(cats)
 print("reading finished: elapsed %f" % (time.time() - read_start))
 
