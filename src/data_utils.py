@@ -15,12 +15,12 @@ def get_dataset(
     data_dir: str, name: str, transform: Optional[Callable] = None, train: bool = False
 ):
     if name == "CIFAR10":
-        return CIFAR10(data_dir, train=train, transform=transform, download=False)
+        return CIFAR10(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR10.1":
         images, labels = load_new_test_data("v6")
         return TensorDataset(torch.Tensor(images).permute(0, 3, 1, 2), torch.Tensor(labels))
     if name == "CIFAR10_frog":
-        full = CIFAR10(data_dir, train=train, transform=transform, download=False)
+        full = CIFAR10(data_dir, train=train, transform=transform, download=True)
         idx = (torch.Tensor(full.targets) == 6).nonzero().flatten()
         return Subset(full, idx)
     if name == "CIFAR10.1_frog":
@@ -29,7 +29,7 @@ def get_dataset(
         return Subset(TensorDataset(torch.Tensor(images).permute(0, 3, 1, 2), torch.Tensor(labels)), idx)
     if name == "CIFAR10_subset":
         idx = load_pickle(os.path.join(data_dir, "subset.pkl"))
-        return Subset(CIFAR10(data_dir, train=True, transform=transform, download=False), idx)
+        return Subset(CIFAR10(data_dir, train=True, transform=transform, download=True), idx)
     else:
         print("Error invalid dataset name")
         sys.exit(1)
