@@ -1,7 +1,16 @@
 import pickle
+import fcntl
 
 def load_pickle(path):
-    return pickle.load(open(path, "rb"))
+    with open(path, "rb") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        ret = pickle.load(f)
+        fcntl.flock(f, fcntl.LOCK_UN)
+    return ret
 
 def dump_pickle(obj, path):
-    return pickle.dump(obj, open(path, "wb"))
+    with open(path, "wb") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        ret = pickle.dump(obj, f)
+        fcntl.flock(f, fcntl.LOCK_UN)
+    return ret
