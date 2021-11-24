@@ -6,3 +6,4 @@ batch_size: 128
 n: null
 use_aug: True
 label: null
+seed: null
