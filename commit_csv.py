@@ -5,7 +5,7 @@ from collections import OrderedDict
 import pickle
 
 osj = os.path.join
-preds_save_loc = "predictions_early_stopping_train/"
+preds_save_loc = "predictions/CLIP"
 
 print("start reading")
 read_start = time.time()
@@ -33,13 +33,13 @@ for col in cats:
 print("reading finished: elapsed %f" % (time.time() - read_start))
 print("committing %d entries" % len(df_add))
 
-if os.path.isfile(osj(preds_save_loc, "preds.pkl")):
-    df_old = pd.read_pickle(osj(preds_save_loc, "preds.pkl"))
-    pd.to_pickle(df_old, osj(preds_save_loc, "preds_old.pkl"))
-    df = pd.concat((df_old, df_add))
-    pd.to_pickle(df, osj(preds_save_loc, "preds.pkl"))
-else:
-    pd.to_pickle(df_add, osj(preds_save_loc, "preds.pkl"))
+# if os.path.isfile(osj(preds_save_loc, "preds.pkl")):
+#     df_old = pd.read_pickle(osj(preds_save_loc, "preds.pkl"))
+#     pd.to_pickle(df_old, osj(preds_save_loc, "preds_old.pkl"))
+#     df = pd.concat((df_old, df_add))
+#     pd.to_pickle(df, osj(preds_save_loc, "preds.pkl"))
+# else:
+pd.to_pickle(df_add, osj(preds_save_loc, "preds.pkl"))
 
 # os.remove(osj(preds_save_loc, "cats.pkl"))
 # os.remove(osj(preds_save_loc, "preds.csv"))

@@ -20,9 +20,10 @@ def main(config: DictConfig):
 
     # extract data and model experiment info to group runs
     group_dict = dict(filter_config(config.datamodule), **filter_config(config.model))
-    group_dict["name"] = get_class_name(config.datamodule._target_, "train")
+    # group_dict["name"] = get_class_name(config.datamodule._target_, "train")
     group_hash = get_dict_hash(group_dict)
     config.logger.group = group_hash
+    print(group_dict)
 
     if not os.path.isdir(config.pred_save_path):
         os.mkdir(config.pred_save_path)

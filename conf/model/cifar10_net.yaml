@@ -1,11 +1,14 @@
 _target_: src.models.CIFAR10Module
 
 arch: Resnet18
+num_classes: 10
 learning_rate: 0.01
 weight_decay: 0.0005
+pretrained: False
 
 seed: ${seed}
 pred_save_path: ${pred_save_path}
+work_dir: ${work_dir}
 eval_last_epoch_only: ${eval_last_epoch_only}
 max_epochs: ${trainer.max_epochs}
 hash: ${logger.group}

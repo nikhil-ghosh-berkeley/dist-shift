@@ -1,4 +1,12 @@
 #!/bin/bash
+#SBATCH --partition=yugroup
+#SBATCH -w morgoth
+#SBATCH --gres=gpu:1
+#SBATCH --mem=MaxMemPerNode
+#SBATCH -t 1-12:00
+
+source `which virtualenvwrapper.sh`
+workon deep-learning
 
 for i in {1..17}; do
     python run.py -m \
@@ -6,7 +14,7 @@ for i in {1..17}; do
     pred_save_loc='predictions_early_stopping_train' \
     eval_last_epoch_only=False \
     logger.project='dist-shift' \
-    datamodule.n=10000 \
+    datamodule.idx_fname='subset.pkl' \
     model.arch=Resnet18,Densenet121 \
     trainer.max_epochs=30 \
     trainer.val_check_interval=0.5 \

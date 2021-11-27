@@ -11,7 +11,7 @@ from pytorch_lightning.loggers import WandbLogger
 from src.utils import log_hyperparams
 
 log = logging.getLogger(__name__)
-logging.getLogger("lightning").setLevel(logging.ERROR)
+logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 
 
 def train(config: DictConfig):
@@ -23,8 +23,7 @@ def train(config: DictConfig):
     trainer: Trainer = hydra.utils.instantiate(
         config.trainer,
         logger=logger,
-        checkpoint_callback=False,
-        num_sanity_val_steps=0,
+        num_sanity_val_steps=0
     )
 
     log.info(f"Instantiating datamodule <{config.datamodule._target_}>")
