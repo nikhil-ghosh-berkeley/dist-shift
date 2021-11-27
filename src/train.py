@@ -16,7 +16,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 
 def train(config: DictConfig):
     log.info(f"Instantiating logger <{config.logger._target_}>")
-    logger: WandbLogger = hydra.utils.instantiate(config.logger)
+    logger: WandbLogger = hydra.utils.instantiate(config.logger)#, settings=wandb.Settings(start_method='fork'))
     logger.log_hyperparams({"seed": config.seed})
 
     log.info(f"Instantiating trainer <{config.trainer._target_}>")
@@ -26,11 +26,16 @@ def train(config: DictConfig):
         num_sanity_val_steps=0
     )
 
-    log.info(f"Instantiating datamodule <{config.datamodule._target_}>")
-    datamodule: LightningDataModule = hydra.utils.instantiate(config.datamodule)
-
     log.info(f"Instantiating model <{config.model._target_}>")
     model: LightningModule = hydra.utils.instantiate(config.model)
+
+    preprocess = None
+    if config.model.arch.startswith('Clip'):
+        preprocess = model.model.preprocess
+
+    log.info(f"Instantiating datamodule <{config.datamodule._target_}>")
+    datamodule: LightningDataModule = hydra.utils.instantiate(config.datamodule, preprocess_func=preprocess)
+
 
     log.info("Logging hyperparameters!")
     log_hyperparams(config=config, trainer=trainer)

@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_sched
 from torch.nn.functional import softmax
+
+from cifar10_models.clip_models import ClipViTB32
 from src.simple_utils import load_pickle
 from cifar10_models.Resnet import ResNet18
 from cifar10_models.Densenet import DenseNet121
@@ -18,6 +20,7 @@ osj = os.path.join
 all_classifiers = {
     "Resnet18": ResNet18,
     "Densenet121": DenseNet121,
+    "ClipViTB32": ClipViTB32
 }
 
 
@@ -72,6 +75,7 @@ class CIFAR10Module(pl.LightningModule):
             self.model = all_classifiers[arch](num_classes=num_classes)
 
         self.val_names = val_names
+        self.is_clip = arch.startswith("Clip")
 
     def forward(self, x):
         return self.model(x)
@@ -192,11 +196,15 @@ class CIFAR10Module(pl.LightningModule):
             self.process_outputs(outputs)
 
     def configure_optimizers(self):
+        if self.is_clip:
+            parameters = self.model.linear.parameters()
+        else:
+            parameters = self.model.parameters()
         optimizer = torch.optim.SGD(
-            self.model.parameters(),
+            parameters,
             lr=self.learning_rate,
             weight_decay=self.weight_decay,
-            momentum=0.9,
+            momentum=0.9
         )
 
         if self.pretrained:

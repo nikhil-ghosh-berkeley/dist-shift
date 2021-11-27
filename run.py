@@ -26,7 +26,7 @@ def main(config: DictConfig):
     print(group_dict)
 
     if not os.path.isdir(config.pred_save_path):
-        os.mkdir(config.pred_save_path)
+        os.makedirs(config.pred_save_path, exist_ok=True)
 
     hash_dict_fname = os.path.join(config.pred_save_path, "hash_dict.pkl")
     if os.path.isfile(hash_dict_fname):

@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 from torchvision import transforms
 from torch.utils.data import DataLoader
-from typing import Optional, List
+from typing import Optional, List, Callable
 from torch.utils.data import Subset
 import numpy as np
 from src.data_utils import get_dataset, cifar10_label_names
@@ -23,6 +23,8 @@ class CIFAR10DataModule(pl.LightningDataModule):
         label: Optional[str] = None,
         use_aug: bool = True,
         val_names: List[str] = [],
+        preprocess_func: Optional[Callable] = None,
+        seed: int = None
     ):
         super().__init__()
         assert name in ["CIFAR10", "imagenet32"]
@@ -63,6 +65,12 @@ class CIFAR10DataModule(pl.LightningDataModule):
             [transforms.ToTensor(), transforms.Normalize(self.mean, self.std)]
         )
 
+        if preprocess_func is not None:
+            self.train_transform = preprocess_func
+            self.test_transform = preprocess_func
+
+        self.seed = seed
+
     def setup(self, stage: Optional[str] = None):
         full_train = get_dataset(
             self.data_dir,
@@ -98,6 +106,8 @@ class CIFAR10DataModule(pl.LightningDataModule):
         if self.n is None:
             self.train_set = full_train
         else:
+            if self.seed is not None:
+                np.random.seed(self.seed)
             rand_ind = np.random.choice(len(full_train), size=(self.n,), replace=False)
             self.train_set = Subset(full_train, rand_ind)
 
