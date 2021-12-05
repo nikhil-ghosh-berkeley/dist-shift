@@ -14,3 +14,4 @@ def dump_pickle(obj, path):
         ret = pickle.dump(obj, f)
         fcntl.flock(f, fcntl.LOCK_UN)
     return ret
+

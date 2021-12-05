@@ -1,6 +1,8 @@
 import pytorch_lightning as pl
-from pytorch_lightning.metrics import Accuracy
+from torchmetrics import Accuracy
 import torch
+import torch.nn as nn
+import torch.optim.lr_scheduler as lr_sched
 from torch.nn.functional import softmax
 
 from cifar10_models.clip_models import ClipViTB32
@@ -21,31 +23,56 @@ all_classifiers = {
     "ClipViTB32": ClipViTB32
 }
 
+
 class CIFAR10Module(pl.LightningModule):
     def __init__(
         self,
         arch: str = "Resnet18",
+        num_classes: int = 10,
         learning_rate: float = 1e-2,
         weight_decay: float = 5e-4,
         max_epochs: int = 100,
         val_names: List[str] = [],
         pred_save_path: str = ".",
+        work_dir: str = ".",
         seed: int = 1,
         hash: Optional[str] = None,
         eval_last_epoch_only: bool = False,
+        pretrained: bool = False,
     ):
         super().__init__()
+        self.num_classes = num_classes
         self.criterion = torch.nn.CrossEntropyLoss()
-        self.accuracy = Accuracy()
-        self.model = all_classifiers[arch]()
+        self.train_acc = Accuracy()
+        self.valid_acc = Accuracy()
+        self.pred_accs = nn.ModuleList([Accuracy() for _ in val_names])
+
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.max_epochs = max_epochs
 
         self.pred_save_path = pred_save_path
+        self.work_dir = work_dir
         self.seed = seed
         self.hash = hash
         self.eval_last_epoch_only = eval_last_epoch_only
+        self.pretrained = pretrained
+
+        if pretrained:
+            if arch == "Resnet18":
+                pre_path = "Resnet18_epoch=99-step=500499.ckpt"
+            else:
+                pre_path = "Densenet121_epoch=57-step=290289.ckpt"
+            self.model = all_classifiers[arch](num_classes=1000)
+            state_dict = torch.load(osj(work_dir, "pretrained", pre_path))["state_dict"]
+            state_dict = {k[6:]: v for k, v in state_dict.items()}
+            self.model.load_state_dict(state_dict)
+            for param in self.model.parameters():
+                param.requires_grad = False
+            num_ftrs = self.model.linear.in_features
+            self.model.linear = nn.Linear(num_ftrs, num_classes)
+        else:
+            self.model = all_classifiers[arch](num_classes=num_classes)
 
         self.val_names = val_names
         self.is_clip = arch.startswith("Clip")
@@ -57,13 +84,20 @@ class CIFAR10Module(pl.LightningModule):
         images, _ = batch
         return self.model(images)
 
-    def process_batch(self, batch):
+    def process_batch(self, batch, stage="train", dataloader_idx=0):
         images, labels = batch
         logits = self.forward(images)
         probs = softmax(logits, dim=1)
         loss = self.criterion(logits, labels)
-        accuracy = self.accuracy(probs, labels)
-        return loss, accuracy * 100
+        if stage == "train":
+            self.train_acc(probs, labels)
+        elif stage == "val":
+            self.valid_acc(probs, labels)
+        elif stage == "pred":
+            assert dataloader_idx > 0
+            pred_acc = self.pred_accs[dataloader_idx - 1]
+            pred_acc(probs, labels)
+        return loss
 
     def batch_preds(self, batch):
         images, labels = batch
@@ -73,9 +107,9 @@ class CIFAR10Module(pl.LightningModule):
         return preds_acc, labels
 
     def training_step(self, batch, batch_idx: int):
-        loss, accuracy = self.process_batch(batch)
-        self.log("loss/train", loss)
-        self.log("acc/train", accuracy)
+        loss = self.process_batch(batch, "train")
+        self.log("train_loss", loss)
+        self.log("train_acc", self.train_acc, on_step=True, on_epoch=False)
         return loss
 
     def is_eval_epoch(self):
@@ -86,14 +120,33 @@ class CIFAR10Module(pl.LightningModule):
     def validation_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
 
         if dataloader_idx == 0:
-            loss, accuracy = self.process_batch(batch)
-            self.log("loss/val", loss, add_dataloader_idx=False)
-            self.log("acc/val", accuracy, add_dataloader_idx=False)
+            loss = self.process_batch(batch, "val")
+            self.log("val_loss", loss, add_dataloader_idx=False)
+            self.log(
+                "val_acc",
+                self.valid_acc,
+                on_step=False,
+                on_epoch=True,
+                add_dataloader_idx=False,
+            )
         else:
+            # NEEDS to be fixed for > 1 val_loaders
+            loss = self.process_batch(batch, "pred", dataloader_idx)
+            self.log("pred_loss", loss, add_dataloader_idx=True)
+            self.log(
+                "pred_acc",
+                self.pred_accs[dataloader_idx - 1],
+                on_step=False,
+                on_epoch=True,
+                add_dataloader_idx=True,
+            )
             if self.is_eval_epoch():
                 preds_acc, labels = self.batch_preds(batch)
                 batch_info = pd.DataFrame(
-                    {"acc": preds_acc.cpu().numpy(), "label": labels.cpu().numpy()}
+                    {
+                        "acc": preds_acc.detach().cpu().numpy(),
+                        "label": labels.detach().cpu().numpy(),
+                    }
                 )
                 return batch_info
 
@@ -129,6 +182,17 @@ class CIFAR10Module(pl.LightningModule):
 
     def validation_epoch_end(self, outputs):
         if self.is_eval_epoch():
+            dir_path = osj(self.pred_save_path, "ds_avg")
+            if not os.path.isdir(dir_path):
+                os.mkdir(dir_path)
+
+            fname = str((self.hash, self.current_epoch, self.global_step)) + ".csv"
+            loc = osj(dir_path, fname)
+
+            with open(loc, "a+") as f:
+                fcntl.flock(f, fcntl.LOCK_EX)
+                f.write(str(self.valid_acc.compute().item()) + "\n")
+                fcntl.flock(f, fcntl.LOCK_UN)
             self.process_outputs(outputs)
 
     def configure_optimizers(self):
@@ -143,8 +207,9 @@ class CIFAR10Module(pl.LightningModule):
             momentum=0.9
         )
 
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=self.max_epochs
-        )
+        if self.pretrained:
+            lr_scheduler = lr_sched.StepLR(optimizer, step_size=7, gamma=0.1)
+        else:
+            lr_scheduler = lr_sched.CosineAnnealingLR(optimizer, T_max=self.max_epochs)
 
         return [optimizer], [lr_scheduler]

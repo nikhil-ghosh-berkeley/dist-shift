@@ -9,9 +9,14 @@ from src.data_utils import cifar10_label_names
 osj = os.path.join
 
 data_dir = "data"
-save_dir = "figures_early_stopping_train"
-pred_dir = "predictions_early_stopping_train"
-train = True
+save_dir = "figures/CLIP"
+pred_dir = "predictions/CLIP"
+train = False
+alpha = 0.5
+markersize = 12
+
+ind_types = ["points", "small", "weird"]
+ind_type = ind_types[2]
 
 print("loading data")
 df = pd.read_pickle(osj(pred_dir, "preds.pkl"))
@@ -34,11 +39,10 @@ default_sizes = {"CIFAR10_train": 50000, "CIFAR10_test": 10000}
 names = df["name"].cat.categories
 hashes = df["hash"].cat.categories
 class_labels = df["label"].cat.categories
-colors = {'Resnet18': 'b', 'Densenet121': 'r'}
-alpha = 0.5
+fmts = {'Resnet18': 'bo', 'Densenet121': 'ro', 'Resnet18-pretrained': 'c^', 'Densenet121-pretrained': 'm^', 'ClipViTB32': 'go'}
 
-# indexes = np.random.choice(10000, size=15)
-indexes = [
+
+ind_fixed = [
     1022,
     1252,
     1977,
@@ -57,7 +61,13 @@ indexes = [
 ]
 
 for name in proc_points:
-    # indexes = scores[name][:, 0][:15].astype(np.uint16)
+    if ind_type == "weird":
+        indexes = scores[name][:, 0][:15].astype(np.uint16)
+    elif ind_type == "small":
+        indexes = scores[name][:, 0][-15:].astype(np.uint16)
+    elif ind_type == "points":
+        indexes = ind_fixed
+
     for idx in indexes:
         print("index %d" % idx)
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(25, 10))
@@ -67,12 +77,13 @@ for name in proc_points:
                 proc_points[name][plot_group][idx]['y'],
                 yerr=proc_points[name][plot_group][idx]['y_err'],
                 xerr=proc_points[name][plot_group][idx]['x_err'],
-                fmt=colors[plot_group] + "o",
+                fmt=fmts[plot_group],
                 alpha=alpha,
+                markersize=markersize,
                 label=plot_group,
             )
 
-        ax1.set_xlabel("Test acc on %s" % train_set, fontsize=16)
+        ax1.set_xlabel("Test acc on %s" % name, fontsize=16)
         ax1.set_ylabel("Probability point classified correctly", fontsize=16)
         ax1.set_title(
             "Train %s, point is index %d from %s" % (train_set, subset[idx], name),
@@ -84,7 +95,7 @@ for name in proc_points:
         img = np.array(img)
         ax2.imshow(img, interpolation="nearest")
         ax2.set_title("Index %d, class: %s" % (subset[idx], classes[label]), fontsize=20)
-        plt.savefig(osj(save_dir, "points", "plot_acc_" + str(idx) + ".png"))
+        plt.savefig(osj(save_dir, ind_type, "plot_acc_" + str(idx) + ".png"))
         plt.close()
 
 for name in proc_labels:
@@ -97,12 +108,13 @@ for name in proc_labels:
                 proc_labels[name][plot_group][label]['y'],
                 yerr=proc_labels[name][plot_group][label]['y_err'],
                 xerr=proc_labels[name][plot_group][label]['x_err'],
-                fmt=colors[plot_group] + "o",
+                fmt=fmts[plot_group],
                 alpha=alpha,
+                markersize=markersize,
                 label=plot_group,
             )
 
-        plt.xlabel("Test acc on %s" % train_set, fontsize=16)
+        plt.xlabel("Test acc on %s" % name, fontsize=16)
         plt.ylabel("Accuracy on class", fontsize=16)
         plt.title(
             "Train %s, class %s from %s" % (train_set, classes[int(label)], name),
