@@ -8,6 +8,8 @@ import pathlib
 import json
 import sys
 import os
+from src.imagenet_downsampled import ImageNetDS
+from src.pacs_dataset import SketchDS
 
 cifar10_label_names = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
@@ -31,8 +33,20 @@ def get_dataset(
         idx = np.argwhere(labels == 6).flatten()
         return Subset(TensorDataset(torch.Tensor(images).permute(0, 3, 1, 2), torch.Tensor(labels)), idx)
     if name == "CIFAR10_subset":
+        dset = CIFAR10(data_dir, train=True, transform=transform, download=False)
         idx = load_pickle(os.path.join(data_dir, "subset.pkl"))
-        return Subset(CIFAR10(data_dir, train=True, transform=transform, download=True), idx)
+        return Subset(dset, idx)
+    if name == "imagenet32":
+        return ImageNetDS(data_dir, 32, train=train, transform=transform)
+    if name == "sketch":
+        dset = SketchDS(data_dir, train=train, transform=transform)
+        labels = np.array(dset.labels)
+        idx_dog = np.argwhere(labels == 1).flatten()
+        idx_horse = np.argwhere(labels == 5).flatten()
+        labels[idx_dog] = 5
+        labels[idx_horse] = 7
+        dset.labels = labels.tolist()
+        return Subset(dset, np.concatenate((idx_dog, idx_horse)))
     else:
         print("Error invalid dataset name")
         sys.exit(1)

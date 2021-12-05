@@ -1,9 +1,11 @@
 data/
 multirun/
 outputs/
-figures*/
-predictions_*/
+figures/
+predictions/
+pretrained/
 test/
+train_imagenet32/
 __pycache__/
 
 reconfig.py

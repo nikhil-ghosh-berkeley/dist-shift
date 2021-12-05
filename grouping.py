@@ -1,14 +1,31 @@
 import pandas as pd
 import os
 import time
+import numpy as np
+import sys
 
 osj = os.path.join
-preds_save_loc = "predictions_early_stopping_train/"
+preds_save_loc = "predictions/CLIP/"
 df = pd.read_pickle(osj(preds_save_loc, "preds.pkl"))
 
-model_keys = ["name", "hash", "epoch_step"]
 print("start grouping by model")
 group_start = time.time()
+
+model_keys = ["name", "hash", "epoch_step"]
+# filenames = os.listdir(osj(preds_save_loc, "ds_avg"))
+# arr = [eval(s[:s.index(".")]) for s in filenames]
+# tuples = [('CIFAR10_test', hash, str(epoch) + ',' + str(step)) for (hash, epoch, step) in arr]
+# dset_stats = np.zeros((len(filenames), 2))
+
+# for i, file in enumerate(filenames):
+#     with open(osj(preds_save_loc, "ds_avg", file)) as f:
+#         accs = np.array(list(map(float, f.read().splitlines())))
+#     dset_stats[i, 0] = np.mean(accs)
+#     dset_stats[i, 1] = np.std(accs) / np.sqrt(len(accs))
+# print(dset_stats)
+# idx = pd.MultiIndex.from_tuples(tuples=tuples, names=('name', 'hash', 'epoch_step'))
+# group_by_model = pd.DataFrame(dset_stats, index=idx, columns=['mean', 'sem'])
+
 # for each dataset; fix hash, epoch_step; get mean and se over random seeds
 group_by_model = (
     df.groupby(by=(model_keys + ["seed"]), sort=False, observed=True)
@@ -19,6 +36,7 @@ group_by_model = (
 
 pd.to_pickle(group_by_model, osj(preds_save_loc, "group_by_model.pkl"))
 print("grouping model finished: elapsed %f" % (time.time() - group_start))
+
 
 print("start grouping by index")
 group_start = time.time()

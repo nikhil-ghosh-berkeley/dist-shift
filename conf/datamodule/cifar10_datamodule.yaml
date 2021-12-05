@@ -1,10 +1,11 @@
 _target_: src.datamodules.CIFAR10DataModule
-
+name: CIFAR10
 data_dir: ${data_dir} 
 val_names: ${val_names}
+use_aug: True
 batch_size: 128
 n: null
-use_aug: True
 label: null
 seed: null
 datasetname: CIFAR10
+idx_fname: null

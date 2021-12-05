@@ -27,6 +27,8 @@ def process_grouping(names, plot_groups, inds, grouped, group_by_model, smooth=F
     start_time = time.time()
     for (name, hash, idx), group in grouped:
         plot_group = hash_dict[hash]["arch"]
+        if hash_dict[hash].get("pretrained", False):
+            plot_group += "-pretrained"
         acc_set = group_by_model.loc[name, hash].to_numpy()
         acc_point = group.to_numpy()
         d = proc[name][plot_group][idx]
@@ -82,10 +84,11 @@ def compute_scores(names, plot_groups, inds, proc, t=2):
     return scores
 
 osj = os.path.join
-pred_dir = "predictions_early_stopping_train"
-save_dir = "figures_early_stopping_train"
+pred_dir = "predictions/CLIP"
+save_dir = "figures/CLIP"
 
 print("loading data")
+start_time = time.time()
 df = pd.read_pickle(osj(pred_dir, "preds.pkl"))
 hash_dict = load_pickle(osj(pred_dir, "hash_dict.pkl"))
 group_by_model = pd.read_pickle(osj(pred_dir, "group_by_model.pkl"))
@@ -95,13 +98,19 @@ group_by_point = point_agg.groupby(by=["name", "hash", "index"])
 
 label_agg = pd.read_pickle(osj(pred_dir, "label_agg.pkl"))
 group_by_label = label_agg.groupby(by=["name", "hash", "label"])
-print("done")
+print("done %f" % (time.time() - start_time))
 
 names = df["name"].cat.categories.to_list()
 hashes = df["hash"].cat.categories.to_list()
 class_labels = df["label"].cat.categories.to_list()
 indexes = df["index"].unique().tolist()
-plot_groups = set([hash_dict[hash]["arch"] for hash in hashes])
+plot_groups = []
+for hash in hashes:
+    pg = hash_dict[hash]["arch"]
+    if hash_dict[hash].get("pretrained", False):
+        pg += "-pretrained"
+    plot_groups.append(pg)
+plot_groups = set(plot_groups)
 
 proc_points = process_grouping(
     names, plot_groups, indexes, group_by_point, group_by_model, smooth=True
