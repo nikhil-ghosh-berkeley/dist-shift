@@ -7,3 +7,4 @@ n: null
 use_aug: True
 label: null
 seed: null
+datasetname: CIFAR10

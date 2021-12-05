@@ -33,11 +33,12 @@ class CIFAR10Module(pl.LightningModule):
         seed: int = 1,
         hash: Optional[str] = None,
         eval_last_epoch_only: bool = False,
+        num_classes=10
     ):
         super().__init__()
         self.criterion = torch.nn.CrossEntropyLoss()
         self.accuracy = Accuracy()
-        self.model = all_classifiers[arch]()
+        self.model = all_classifiers[arch](num_classes=num_classes)
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.max_epochs = max_epochs

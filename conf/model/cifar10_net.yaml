@@ -10,3 +10,4 @@ eval_last_epoch_only: ${eval_last_epoch_only}
 max_epochs: ${trainer.max_epochs}
 hash: ${logger.group}
 val_names: ${datamodule.val_names}
+num_classes: 10

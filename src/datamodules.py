@@ -10,7 +10,6 @@ import torch
 
 class CIFAR10DataModule(pl.LightningDataModule):
     name = "CIFAR10"
-
     def __init__(
         self,
         data_dir: str = "./",
@@ -20,7 +19,8 @@ class CIFAR10DataModule(pl.LightningDataModule):
         use_aug: bool = True,
         val_names: List[str] = [],
         preprocess_func: Optional[Callable] = None,
-        seed: int = None
+        seed: int = None,
+        datasetname="CIFAR10"
     ):
         super().__init__()
         if label is not None:
@@ -34,6 +34,11 @@ class CIFAR10DataModule(pl.LightningDataModule):
         self.val_names = val_names
         self.mean = (0.4914, 0.4822, 0.4465)
         self.std = (0.2471, 0.2435, 0.2616)
+        self.datasetname = datasetname
+        
+        if datasetname.lower() == 'cifar100':
+            self.mean, self.std = ((0.5074,0.4867,0.4411),(0.2011,0.1987,0.2025))
+
         self.seed = seed
 
         if use_aug:
@@ -61,14 +66,14 @@ class CIFAR10DataModule(pl.LightningDataModule):
     def setup(self, stage: Optional[str] = None):
         full_train = get_dataset(
             self.data_dir,
-            CIFAR10DataModule.name,
+            self.datasetname,
             transform=self.train_transform,
             train=True,
         )
 
         val_set = get_dataset(
             self.data_dir,
-            CIFAR10DataModule.name,
+            self.datasetname,
             transform=self.test_transform,
             train=False,
         )
