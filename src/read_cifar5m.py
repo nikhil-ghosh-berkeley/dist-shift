@@ -1,77 +1,41 @@
-dog = np.load('/n/holystore01/LABS/barak_lab/Everyone/cifar-5m/class5.npy')
-
-dog_train = dog[(train_sz // 2) * (offset):(train_sz // 2) * (1 + offset)]
-dog_train2 = dog[260000 + (train2_sz // 2) * (offset):260000 + (train2_sz // 2) * (1 + offset)]
-dog_test = dog[-test_sz // 2:]
-
-horse = np.load('/n/holystore01/LABS/barak_lab/Everyone/cifar-5m/class7.npy')
-horse_train = horse[(train_sz // 2) * (offset):(train_sz // 2) * (1 + offset)]
-horse_train2 = horse[260000 + (train2_sz // 2) * (offset):260000 + (train2_sz // 2) * (1 + offset)]
-horse_test = horse[-test_sz // 2:]
+import numpy as np
+from torch.utils.data import Dataset
 
 mean = np.array([0.4555, 0.4362, 0.3415])[None, None, None, :]
 std = np.array([.2284, .2167, .2165])[None, None, None, :]
 
-x_train = np.array((np.concatenate([dog_train, horse_train]) / 255. - mean) / std)
-x_train2 = np.array((np.concatenate([dog_train2, horse_train2]) / 255. - mean) / std)
-x_test = np.array((np.concatenate([dog_test, horse_test]) / 255. - mean) / std)
 
-y_train = np.concatenate((np.zeros((train_sz // 2)) + 1., np.zeros((train_sz // 2)) - 1.)).reshape((train_sz, 1))
-y_train2 = np.concatenate((np.zeros((train2_sz // 2)) + 1., np.zeros((train2_sz // 2)) - 1.)).reshape((train2_sz, 1))
-y_test = np.concatenate((np.zeros((test_sz // 2)) + 1., np.zeros((test_sz // 2)) - 1.)).reshape((test_sz, 1))
+class BasicDataset(Dataset):
+    def __init__(self, data_x, data_y):
+        super().__init__()
+        self.data_x = data_x
+        self.data_y = data_y
 
-print(x_train.shape, y_train.shape)
-print(x_train2.shape, y_train2.shape)
-print(x_test.shape, y_test.shape)
+    def __getitem__(self, index):
+        return self.data_x[index], self.data_y[index]
 
-train_dataset = C10_Dataset(x_train, y_train)
-train2_dataset = C10_Dataset(x_train2, y_train2)
-test_dataset = C10_Dataset(x_test, y_test)
+    def __len__(self):
+        return self.data_x.shape[0]
 
-rng = jax.random.PRNGKey(0)
 
-train_dataloader = JaxDataLoader(train_dataset, rng, batch_size=batch_size, shuffle=shuffle, collate_fn=stack_collate,
-                                 num_workers=2)
-train2_dataloader = JaxDataLoader(train2_dataset, rng, batch_size=batch_size, shuffle=shuffle, collate_fn=stack_collate,
-                                  num_workers=2)
-test_dataloader = JaxDataLoader(test_dataset, rng, batch_size=batch_test_size, shuffle=False, collate_fn=stack_collate,
-                                num_workers=2)
+def get_dataset(data_path=None):
+    if data_path is None:
+        data_path = '/n/holystore01/LABS/barak_lab/Everyone/cifar-5m'
+    print(f'reading cifar 5m data from {data_path}')
+    class_files = []
+    class_labels = []
+    min_len = np.inf
+    for i in range(10):
+        file_name = f'{data_path}/class{i}.npy'
+        curr_data = np.load(file_name)
+        class_files += [curr_data]
+        class_labels += [i * np.ones(curr_data.shape[0])]
+        min_len = np.min(min_len, curr_data.shape[0])
 
-dog = np.load('/n/holystore01/LABS/barak_lab/Everyone/cifar-5m/class5.npy')
+    for i in range(10):
+        class_files[i] = class_files[i][:min_len]
 
-dog_train = dog[(train_sz // 2) * (offset):(train_sz // 2) * (1 + offset)]
-dog_train2 = dog[260000 + (train2_sz // 2) * (offset):260000 + (train2_sz // 2) * (1 + offset)]
-dog_test = dog[-test_sz // 2:]
+    x = np.array((np.concatenate(class_files) / 255. - mean) / std)
+    y = np.array((np.concatenate(class_labels)))
 
-horse = np.load('/n/holystore01/LABS/barak_lab/Everyone/cifar-5m/class7.npy')
-horse_train = horse[(train_sz // 2) * (offset):(train_sz // 2) * (1 + offset)]
-horse_train2 = horse[260000 + (train2_sz // 2) * (offset):260000 + (train2_sz // 2) * (1 + offset)]
-horse_test = horse[-test_sz // 2:]
-
-mean = np.array([0.4555, 0.4362, 0.3415])[None, None, None, :]
-std = np.array([.2284, .2167, .2165])[None, None, None, :]
-
-x_train = np.array((np.concatenate([dog_train, horse_train]) / 255. - mean) / std)
-x_train2 = np.array((np.concatenate([dog_train2, horse_train2]) / 255. - mean) / std)
-x_test = np.array((np.concatenate([dog_test, horse_test]) / 255. - mean) / std)
-
-y_train = np.concatenate((np.zeros((train_sz // 2)) + 1., np.zeros((train_sz // 2)) - 1.)).reshape((train_sz, 1))
-y_train2 = np.concatenate((np.zeros((train2_sz // 2)) + 1., np.zeros((train2_sz // 2)) - 1.)).reshape((train2_sz, 1))
-y_test = np.concatenate((np.zeros((test_sz // 2)) + 1., np.zeros((test_sz // 2)) - 1.)).reshape((test_sz, 1))
-
-print(x_train.shape, y_train.shape)
-print(x_train2.shape, y_train2.shape)
-print(x_test.shape, y_test.shape)
-
-train_dataset = C10_Dataset(x_train, y_train)
-train2_dataset = C10_Dataset(x_train2, y_train2)
-test_dataset = C10_Dataset(x_test, y_test)
-
-rng = jax.random.PRNGKey(0)
-
-train_dataloader = JaxDataLoader(train_dataset, rng, batch_size=batch_size, shuffle=shuffle, collate_fn=stack_collate,
-                                 num_workers=2)
-train2_dataloader = JaxDataLoader(train2_dataset, rng, batch_size=batch_size, shuffle=shuffle, collate_fn=stack_collate,
-                                  num_workers=2)
-test_dataloader = JaxDataLoader(test_dataset, rng, batch_size=batch_test_size, shuffle=False, collate_fn=stack_collate,
-                                num_workers=2)
+    return BasicDataset(x, y)
