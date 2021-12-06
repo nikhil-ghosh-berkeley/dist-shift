@@ -6,22 +6,14 @@ To run the experiment with early stopping
 ./scripts/run_early_stopping.sh
 ```
 
-To run the experiment with varying n
+To run the experiment with pretrained model
 
 ```
-./scripts/run_early_stopping.sh
+./scripts/pretrained.sh
 ```
 
-The results will be saved to directory ```pred_save_loc``` (which can be changed in ```config.yaml```). In this directory the following are saved
+The results will be saved to "predictions" subdirectory ```pred_save_loc``` (which can be changed in ```config.yaml```). In this directory a subdirectory "raw" contains the raw data. Each file is of the form (name, hash, epoch, step) and accumulates data from each trial.
 
-1. preds.csv
-2. hash_dict.pkl
-3. cats.pkl
+for an example of how this data is processed see "parse_results.ipynb" 
 
-running ```commit_csv.py``` with ```pred_save_loc``` will add the data from ```preds.csv``` to a pickle file ```preds.pkl```
-
-To make the plots, first run ```grouping.py``` to group the data entries of ```preds.pkl``` by model, data index, and label which is saved in ```group_by_model.pkl```, ```point_agg.pkl```, and ```label_agg.pkl``` respectively.
-
-Then run ```process_points.py``` which processes the groupings to get scores for each point and aggregates all the information for the plots in ```proc_labels.pkl``` and ```proc_points.pkl```
-
-Using ```proc_labels.pkl``` and ```proc_points.pkl```, ```plots.py``` will create the required plots.
+to see how the processed data can then be plotted see "plotting.ipynb"
