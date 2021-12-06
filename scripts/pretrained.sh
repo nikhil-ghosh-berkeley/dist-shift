@@ -3,7 +3,7 @@
 for i in {1..10}
 do
     python run.py \
-    pred_save_loc='predictions/pretrained_logits' \
+    pred_save_loc='pretrained_logits' \
     eval_last_epoch_only=False \
     datamodule.n=5000 \
     model.arch=Densenet121 \

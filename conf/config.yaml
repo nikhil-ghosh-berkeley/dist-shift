@@ -8,11 +8,12 @@ defaults:
 
 work_dir: ${hydra:runtime.cwd}
 data_dir: ${work_dir}/${data_loc}/
-pred_save_path: ${work_dir}/${pred_save_loc}/
+pred_save_path: ${work_dir}/${pred_base}/${pred_save_loc}
 
 # path to folder with data
 data_loc: data
-pred_save_loc: predictions
+pred_base: predictions
+pred_save_loc: ''
 eval_last_epoch_only: False
 save_logits: True
 val_names: ['CIFAR10_test', 'CIFAR10_test']

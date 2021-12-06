@@ -4,7 +4,7 @@ for i in {1..5}
 do
     python run.py -m \
     save_logits=True \
-    pred_save_loc='predictions/early_stopping_logits' \
+    pred_save_loc='early_stopping_logits' \
     eval_last_epoch_only=False \
     datamodule.n=10000 \
     model.arch=Resnet18,Densenet121 \
