@@ -14,5 +14,5 @@ pred_save_path: ${work_dir}/${pred_save_loc}/
 data_loc: data
 pred_save_loc: predictions
 eval_last_epoch_only: False
-val_names: ['CIFAR10_test']
-seed: 1
+save_logits: True
+val_names: ['CIFAR10_test', 'CIFAR10_test']
