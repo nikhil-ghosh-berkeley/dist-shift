@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import CLIP.clip as clip
+from cifar10_models.CLIP import clip
 
 representations_dims = {'RN50': 1024,
                         'RN101': 512,

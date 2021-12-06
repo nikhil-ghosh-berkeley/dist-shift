@@ -1,9 +1,9 @@
 #!/bin/bash
 
-for i in {1..25}
+for i in {1..10}
 do
     python run.py \
-    pred_save_loc='predictions/pretrained' \
+    pred_save_loc='pretrained_logits' \
     eval_last_epoch_only=False \
     datamodule.n=5000 \
     model.arch=Densenet121 \
@@ -13,5 +13,5 @@ do
     trainer.max_epochs=3 \
     trainer.val_check_interval=0.1 \
     datamodule.use_aug=True \
-    logger.tags='[pretrained]'
+    logger.tags='[pretrained_logits]'
 done

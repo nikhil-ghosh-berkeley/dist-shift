@@ -1,5 +1,5 @@
-_target_: src.datamodules.CIFAR10DataModule
-name: CIFAR10
+_target_: src.datamodules.DataModule
+train_name: CIFAR10_train
 data_dir: ${data_dir} 
 val_names: ${val_names}
 use_aug: True

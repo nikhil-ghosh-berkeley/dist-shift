@@ -1,45 +1,30 @@
 import pandas as pd
-import os
 import time
-from collections import OrderedDict
 import pickle
+from os.path import join
 
-osj = os.path.join
-preds_save_loc = "predictions/CLIP"
+def csv_to_pickle(pred_dirs, pred_base="predictions"):
+    for pred_dir in pred_dirs:
+        preds_save_path = join(pred_base, pred_dir)
+        print("start reading preds.csv")
+        read_start = time.time()
+        cats = pickle.load(open(join(preds_save_path, "cats.pkl"), "rb"))
 
-print("start reading")
-read_start = time.time()
-cats = pickle.load(open(osj(preds_save_loc, "cats.pkl"), "rb"))
-print(cats)
-print("reading finished: elapsed %f" % (time.time() - read_start))
+        df = pd.read_csv(
+            join(preds_save_path, "preds.csv"),
+            dtype={
+                "index": "uint16",
+                "epoch_step": "category",
+                "name": "category",
+                "hash": "category",
+                "seed": "category",
+                "label": "category"
+            },
+        )
 
-print("start reading")
-read_start = time.time()
-df_add = pd.read_csv(
-    osj(preds_save_loc, "preds.csv"),
-    dtype={
-        "index": "uint16",
-        "epoch_step": "category",
-        "name": "category",
-        "hash": "category",
-        "seed": "category",
-        "label": "category"
-    },
-)
-
-for col in cats:
-    df_add[col] = df_add[col].cat.rename_categories(lambda x: list(cats[col].keys())[int(x)])
-
-print("reading finished: elapsed %f" % (time.time() - read_start))
-print("committing %d entries" % len(df_add))
-
-# if os.path.isfile(osj(preds_save_loc, "preds.pkl")):
-#     df_old = pd.read_pickle(osj(preds_save_loc, "preds.pkl"))
-#     pd.to_pickle(df_old, osj(preds_save_loc, "preds_old.pkl"))
-#     df = pd.concat((df_old, df_add))
-#     pd.to_pickle(df, osj(preds_save_loc, "preds.pkl"))
-# else:
-pd.to_pickle(df_add, osj(preds_save_loc, "preds.pkl"))
-
-# os.remove(osj(preds_save_loc, "cats.pkl"))
-# os.remove(osj(preds_save_loc, "preds.csv"))
+        for col in cats:
+            df[col] = df[col].cat.rename_categories(lambda x: list(cats[col].keys())[int(x)])
+        print("reading finished: elapsed %f" % (time.time() - read_start))
+        print("committing %d entries" % len(df))
+        pd.to_pickle(df, join(preds_save_path, "preds.pkl"))
+        print("done")

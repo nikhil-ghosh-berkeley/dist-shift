@@ -7,10 +7,8 @@ pretrained/
 test/
 train_imagenet32/
 __pycache__/
-
-reconfig.py
-rehash.py
-visualize.py
+old/
+processed/
 src/logs.py
 scripts/job.sh
 scripts/run_frog.sh
