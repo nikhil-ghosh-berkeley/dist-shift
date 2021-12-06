@@ -24,7 +24,8 @@ class CIFAR10DataModule(pl.LightningDataModule):
         use_aug: bool = True,
         val_names: List[str] = [],
         preprocess_func: Optional[Callable] = None,
-        seed: int = None
+        seed: int = None,
+        datasetname="CIFAR10"
     ):
         super().__init__()
         assert name in ["CIFAR10", "imagenet32"]
@@ -40,6 +41,12 @@ class CIFAR10DataModule(pl.LightningDataModule):
         self.idx_fname = idx_fname
         self.val_names = val_names
 
+        self.datasetname = datasetname
+        
+        if datasetname.lower() == 'cifar100':
+            self.mean, self.std = ((0.5074,0.4867,0.4411),(0.2011,0.1987,0.2025))
+
+        self.seed = seed
         if name == "CIFAR10":
             self.mean = (0.4914, 0.4822, 0.4465)
             self.std = (0.2471, 0.2435, 0.2616)

@@ -1,5 +1,5 @@
 import pytorch_lightning as pl
-from torchmetrics import Accuracy
+from pytorch_lightning.metrics import Accuracy 
 import torch
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_sched
@@ -38,11 +38,14 @@ class CIFAR10Module(pl.LightningModule):
         seed: int = 1,
         hash: Optional[str] = None,
         eval_last_epoch_only: bool = False,
+        num_classes=10
         pretrained: bool = False,
     ):
         super().__init__()
         self.num_classes = num_classes
         self.criterion = torch.nn.CrossEntropyLoss()
+        self.accuracy = Accuracy()
+        self.model = all_classifiers[arch](num_classes=num_classes)
         self.train_acc = Accuracy()
         self.valid_acc = Accuracy()
         self.pred_accs = nn.ModuleList([Accuracy() for _ in val_names])

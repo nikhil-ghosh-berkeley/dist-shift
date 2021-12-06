@@ -6,5 +6,6 @@ use_aug: True
 batch_size: 128
 n: null
 label: null
-idx_fname: null
 seed: null
+datasetname: CIFAR10
+idx_fname: null
