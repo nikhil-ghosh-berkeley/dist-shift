@@ -1,4 +1,4 @@
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision import transforms
 from typing import Callable, Optional, List
 from torch.utils.data import TensorDataset, Subset
@@ -38,6 +38,9 @@ def get_preprocessing(dset: str, use_aug: bool = False, train: bool = False):
     if dset.startswith("CIFAR10"):
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2471, 0.2435, 0.2616)
+    elif dset.lower() == 'cifar100':
+        mean = (0.5074, 0.4867, 0.4411)
+        std = (0.2011, 0.1987, 0.2025)
     else:
         mean = (0.5, 0.5, 0.5)
         std = (0.5, 0.5, 0.5)
@@ -70,7 +73,6 @@ def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
     if name == "CIFAR10":
         return CIFAR10(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR100":
-        from torchvision.datasets import CIFAR100
         return CIFAR100(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR10.1":
         images, labels = load_new_test_data("v6")

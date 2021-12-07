@@ -1,5 +1,5 @@
 import pytorch_lightning as pl
-from pytorch_lightning.metrics import Accuracy 
+from pytorch_lightning.metrics import Accuracy
 import torch
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_sched
@@ -11,10 +11,7 @@ from cifar10_models.Resnet import ResNet18
 from cifar10_models.Densenet import DenseNet121
 from typing import List, Optional
 import numpy as np
-import os
 from os.path import join, isfile
-import pdb
-import logging
 
 
 all_classifiers = {
@@ -36,7 +33,6 @@ class CIFAR10Module(pl.LightningModule):
         work_dir: str = ".",
         hash: Optional[str] = None,
         eval_last_epoch_only: bool = False,
-        num_classes=10
         pretrained: bool = False,
         save_logits: bool = False,
     ):

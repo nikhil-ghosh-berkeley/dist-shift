@@ -5,7 +5,3 @@ val_names: ${val_names}
 use_aug: True
 batch_size: 128
 n: null
-label: null
-seed: null
-datasetname: CIFAR10
-idx_fname: null

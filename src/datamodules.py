@@ -17,10 +17,6 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 128,
         use_aug: bool = False,
         n: Optional[int] = None,
-        preprocess_func: Optional[Callable] = None,
-        seed: int = None,
-        name="CIFAR10"
-
     ):
         super().__init__()
         self.train_name = train_name
@@ -30,40 +26,6 @@ class DataModule(pl.LightningDataModule):
         self.n = n
         self.val_names = val_names
 
-
-        self.seed = seed
-        if name == "CIFAR10":
-            self.mean = (0.4914, 0.4822, 0.4465)
-            self.std = (0.2471, 0.2435, 0.2616)
-        elif name == "imagenet32":
-            self.mean = (0.5, 0.5, 0.5)
-            self.std = (0.5, 0.5, 0.5)
-        elif name .lower() == 'cifar100':
-            self.mean, self.std = ((0.5074,0.4867,0.4411),(0.2011,0.1987,0.2025))
-
-        if use_aug:
-            self.train_transform = transforms.Compose(
-                [
-                    transforms.RandomCrop(32, padding=4),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    transforms.Normalize(self.mean, self.std),
-                ]
-            )
-        else:
-            self.train_transform = transforms.Compose(
-                [transforms.ToTensor(), transforms.Normalize(self.mean, self.std)]
-            )
-
-        self.test_transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize(self.mean, self.std)]
-        )
-
-        if preprocess_func is not None:
-            self.train_transform = preprocess_func
-            self.test_transform = preprocess_func
-
-        self.seed = seed
         self.train_transform = get_preprocessing(train_name, use_aug, train=True)
         self.test_transforms = [
             get_preprocessing(val_name, use_aug, train=False) for val_name in val_names
