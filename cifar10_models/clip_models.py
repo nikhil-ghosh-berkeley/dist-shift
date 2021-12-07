@@ -22,25 +22,25 @@ class FC(nn.Module):
         return self.linear(x)
 
 
-def ClipRN50():
-    return FC('RN50')
+def ClipRN50(num_classes=10):
+    return FC('RN50', output_size=num_classes)
 
 
-def ClipRN101():
-    return FC('RN101')
+def ClipRN101(num_classes=10):
+    return FC('RN101', output_size=num_classes)
 
 
-def ClipRN50x4():
-    return FC('RN50x4')
+def ClipRN50x4(num_classes=10):
+    return FC('RN50x4', output_size=num_classes)
 
 
-def ClipRN50x15():
-    return FC('RN50x16')
+def ClipRN50x15(num_classes=10):
+    return FC('RN50x16', output_size=num_classes)
 
 
-def ClipViTB16():
-    return FC('ViT-B/16')
+def ClipViTB16(num_classes=10):
+    return FC('ViT-B/16', output_size=num_classes)
 
 
-def ClipViTB32():
-    return FC('ViT-B/32')
+def ClipViTB32(num_classes=10):
+    return FC('ViT-B/32', output_size=num_classes)

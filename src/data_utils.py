@@ -69,6 +69,9 @@ def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
 
     if name == "CIFAR10":
         return CIFAR10(data_dir, train=train, transform=transform, download=True)
+    if name == "CIFAR100":
+        from torchvision.datasets import CIFAR100
+        return CIFAR100(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR10.1":
         images, labels = load_new_test_data("v6")
         return TensorDataset(
