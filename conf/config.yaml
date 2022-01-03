@@ -16,4 +16,4 @@ pred_base: predictions
 pred_save_loc: ''
 eval_last_epoch_only: False
 save_logits: True
-val_names: ['CIFAR10_test', 'CIFAR10_test']
+val_names: ['CIFAR10_test', 'CIFAR10_test', "CIFAR10v2_test", 'CINIC10_test']

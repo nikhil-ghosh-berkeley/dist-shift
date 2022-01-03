@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
-from pytorch_lightning.metrics import Accuracy
+# from pytorch_lightning.metrics
+from torchmetrics import Accuracy
 import torch
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_sched

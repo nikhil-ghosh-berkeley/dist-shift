@@ -1,4 +1,5 @@
 from torchvision.datasets import CIFAR10, CIFAR100
+import torchvision
 from torchvision import transforms
 from typing import Callable, Optional, List
 from torch.utils.data import TensorDataset, Subset
@@ -11,9 +12,43 @@ import sys
 import os
 from src.imagenet_downsampled import ImageNetDS
 from src.pacs_dataset import SketchDS
+from PIL import Image
 
 osj = os.path.join
 cifar10_label_names = ["plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+
+class CIFAR10v2(torchvision.datasets.CIFAR10):
+    
+    def __init__(self, root, train=True, transform=None, target_transform=None,
+                 download=False):
+        self.transform = transform
+        self.target_transform = target_transform
+
+        # if train: 
+        data = np.load(root + "/" + 'cifar102_train.npz', allow_pickle=True).item()
+        # else: 
+            # data = np.load(root + "/" + 'cifar102_test.npy', allow_pickle=True).item()
+            
+        self.data = data["images"]
+        self.targets = data["labels"]
+
+    def __len__(self): 
+        return len(self.targets)
+
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
+
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
 
 def get_index_subset(data_dir: str, idx_fname: str, full_train):
     return Subset(full_train, load_pickle(osj(data_dir, idx_fname)))
@@ -41,6 +76,9 @@ def get_preprocessing(dset: str, use_aug: bool = False, train: bool = False):
     elif dset.lower() == 'cifar100':
         mean = (0.5074, 0.4867, 0.4411)
         std = (0.2011, 0.1987, 0.2025)
+    elif dset.lower().startswith("cinic10"): 
+        mean = (0.47889522, 0.47227842, 0.43047404)
+        std = (0.24205776, 0.23828046, 0.25874835)
     else:
         mean = (0.5, 0.5, 0.5)
         std = (0.5, 0.5, 0.5)
@@ -74,10 +112,20 @@ def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
         return CIFAR10(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR100":
         return CIFAR100(data_dir, train=train, transform=transform, download=True)
+
+    if name.lower() == "cinic10": 
+        cinic_directory = data_dir + '/CINIC-10'
+        dataset =  torchvision.datasets.ImageFolder(cinic_directory +'/'+ split, transform=transform)
+        rand_ind = np.random.choice(len(dataset), size=(90000,), replace=False)
+        return Subset(dataset, rand_ind)
+
+    if name == "CIFAR10v2":
+        return CIFAR10v2(data_dir, train=train, transform=transform, download=True)
+
     if name == "CIFAR10.1":
         images, labels = load_new_test_data("v6")
         return TensorDataset(
-            torch.Tensor(images).permute(0, 3, 1, 2), torch.Tensor(labels)
+            torch.Tensor(images).permute(0, 3, 1, 2), torch.LongTensor(labels)
         )
     if name == "CIFAR10_frog":
         full = CIFAR10(data_dir, train=train, transform=transform, download=True)
