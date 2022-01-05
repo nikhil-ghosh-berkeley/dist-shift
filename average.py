@@ -50,6 +50,9 @@ def average(pred_dirs, pred_base="predictions", raw_dir="raw", avg_dir="avg"):
             df = pd.DataFrame({"label": label, "acc": acc})
             avg_dct["labels"] = df.groupby(by="label").agg(["mean", "sem"])
 
+            df = pd.DataFrame({"index": index, "labels": probs[np.arange(len(label)),label]})
+            avg_dct["soft_points"] = df.groupby(by="index").agg(["mean", "sem"])
+            
             avg_dct["dset_mean"] = np.mean(dct["dset"])
             avg_dct["dset_sem"] = np.std(dct["dset"]) / np.sqrt(len(dct["dset"]))
 

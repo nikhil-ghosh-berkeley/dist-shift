@@ -25,7 +25,7 @@ class CIFAR10v2(torchvision.datasets.CIFAR10):
         self.target_transform = target_transform
 
         # if train: 
-        data = np.load(root + "/" + 'cifar102_train.npz', allow_pickle=True).item()
+        data = np.load(root + "/" + 'cifar102_train.npz', allow_pickle=True)
         # else: 
             # data = np.load(root + "/" + 'cifar102_test.npy', allow_pickle=True).item()
             

@@ -68,6 +68,7 @@ def group(pred_dirs, plot_group, pred_base="predictions", avg_dir="avg", proc_di
             print(pg)
             x, x_err = [], []
             points, points_err = [], []
+            soft_points, soft_points_err = [], []
             labels, labels_err = [], []
             probs, freqs = [], []
 
@@ -78,6 +79,9 @@ def group(pred_dirs, plot_group, pred_base="predictions", avg_dir="avg", proc_di
 
                 acc_mean = ("acc", "mean")
                 acc_sem = ("acc", "sem")
+                
+                soft_mean = ("labels", "mean")
+                soft_sem = ("labels", "sem")
 
                 df = dct["points"]
                 points.append(df[acc_mean].to_numpy())
@@ -86,6 +90,10 @@ def group(pred_dirs, plot_group, pred_base="predictions", avg_dir="avg", proc_di
                 df = dct["labels"]
                 labels.append(df[acc_mean].to_numpy())
                 labels_err.append(df[acc_sem].to_numpy())
+                
+                df = dct["soft_points"]
+                soft_points.append(df[soft_mean].to_numpy())
+                soft_points_err.append(df[soft_sem].to_numpy())
 
                 if 'probs' in dct:
                     probs.append(np.expand_dims(dct['probs'].to_numpy(), -1))
@@ -110,6 +118,8 @@ def group(pred_dirs, plot_group, pred_base="predictions", avg_dir="avg", proc_di
                 "x_err": x_err,
                 "points": points,
                 "points_err": points_err,
+                "soft_points": soft_points,
+                "soft_points_err": soft_points_err,
                 "labels": labels,
                 "labels_err": labels_err,
             }
