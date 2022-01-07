@@ -31,7 +31,7 @@ def load_pickle(fname, lock_dir='locks'):
     lock = filelock.FileLock(lockfname)
 
     try:
-        with lock.acquire(timeout=10):
+        with lock.acquire(timeout=-1):
             try:
                 with open(fname, 'rb') as f:
                     result = pickle.load(f)

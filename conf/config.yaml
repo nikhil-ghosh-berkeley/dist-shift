@@ -17,3 +17,4 @@ pred_save_loc: ''
 eval_last_epoch_only: False
 save_logits: True
 val_names: ['CIFAR10_test', 'CIFAR10_test']
+num_workers: 1
