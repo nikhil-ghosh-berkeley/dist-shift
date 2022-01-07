@@ -1,4 +1,4 @@
-from torchvision.datasets import CIFAR10, CIFAR100
+from torchvision.datasets import CIFAR10, CIFAR100, ImageFolder
 from torchvision import transforms
 from typing import Callable, Optional, List
 from torch.utils.data import TensorDataset, Subset, Dataset
@@ -14,10 +14,24 @@ from src.simple_utils import load_pickle
 from src.read_cifar5m import CIFAR5m
 from PIL import Image
 
-cifar10_label_names = ["plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+cifar10_label_names = [
+    "plane",
+    "car",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
+]
+
 
 class NumpyDataset(Dataset):
-    def __init__(self, name: str, data_dir: str = None, transform: Optional[Callable] = None) -> None:
+    def __init__(
+        self, name: str, data_dir: str = None, transform: Optional[Callable] = None
+    ) -> None:
         self.data_dir = data_dir
         self.transform = transform
         self.name = name
@@ -38,8 +52,10 @@ class NumpyDataset(Dataset):
     def __len__(self):
         return self.data_x.shape[0]
 
+
 def get_index_subset(data_dir: str, idx_fname: str, full_train):
     return Subset(full_train, load_pickle(os.path.join(data_dir, idx_fname)))
+
 
 def get_class_subset(label: str, class_names: List[str], full_train, full_val):
     label_idx = class_names.index(label)
@@ -52,6 +68,7 @@ def get_class_subset(label: str, class_names: List[str], full_train, full_val):
         (torch.Tensor(full_val.targets) == label_idx).nonzero().flatten(),
     )
     return train_set, val_set
+
 
 def get_preprocessing(dset: str, use_aug: bool = False, train: bool = False):
     # WARNING only defined for CIFAR-type datasets
@@ -98,7 +115,7 @@ def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
     name = splitted[0]
 
     # check if dset is of the form *_test or *_train
-    has_partition = (len(splitted) == 2 and (splitted[1] in ["train", "test"]))
+    has_partition = len(splitted) == 2 and (splitted[1] in ["train", "test"])
 
     if not has_partition:
         if name == "CIFAR5m":
@@ -109,7 +126,7 @@ def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
             raise ValueError("Error invalid dataset name %s" % name)
 
     split = splitted[1]
-    train = (split == "train")
+    train = split == "train"
 
     if name == "CIFAR10":
         return CIFAR10(data_dir, train=train, transform=transform, download=True)
@@ -197,3 +214,26 @@ def load_new_test_data(version_string="", load_tinyimage_indices=False):
         assert type(tinyimage_indices) is list
         assert len(tinyimage_indices) == labels.shape[0]
         return imagedata, labels, tinyimage_indices
+
+
+def get_dataset_imagenet(val_name):
+    default_data_paths = {
+        "imagenet_val": "/home/jupyter/dist-shift/data/imagenet-val/",
+        "imagenet_a": "/home/jupyter/dist-shift/data/...",
+        "imagenet_r": "/home/jupyter/dist-shift/data/...",
+        "imagenet_sketch": "/home/jupyter/dist-shift/data/sketch",
+        "imagenet_v2": "/home/jupyter/dist-shift/data/...",
+    }
+    if val_name not in ["imagenet_val", "imagenet_sketch"]:
+        raise NotImplementedError()
+    datapath = default_data_paths[val_name]
+    test_transforms = transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+    return ImageFolder(datapath, test_transforms)
