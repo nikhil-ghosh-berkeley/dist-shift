@@ -15,6 +15,5 @@ old/
 CLIP/
 
 src/logs.py
-plotting_cifar5m.ipynb
 test_cifar5m.py
 parse_results.py
