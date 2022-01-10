@@ -12,7 +12,7 @@ scripts/
 __pycache__/
 old/
 .ipynb_checkpoints/
-preetum/
+CLIP/
 
 src/logs.py
 plotting_cifar5m.ipynb
