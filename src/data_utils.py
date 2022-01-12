@@ -1,9 +1,10 @@
-from torchvision.datasets import CIFAR10, CIFAR100
+from torchvision.datasets import CIFAR10, CIFAR100, ImageFolder
 from torchvision import transforms
 from typing import Callable, Optional, List
 from torch.utils.data import TensorDataset, Subset, Dataset
 import numpy as np
 import torch
+import torchvision
 
 import pathlib
 import json
@@ -12,11 +13,44 @@ from src.imagenet_downsampled import ImageNetDS
 from src.pacs_dataset import SketchDS
 from src.simple_utils import load_pickle
 from src.read_cifar5m import CIFAR5m
-from src.imagenet_names import imagenet_classes
+from src.imagenet_names import imagenet_classes, imagenet_a_classes, imagenet_r_classes
 from PIL import Image
 
 cifar10_label_names = ["plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
 
+class CIFAR10v2(torchvision.datasets.CIFAR10):
+    
+    def __init__(self, root, train=True, transform=None, target_transform=None,
+                 download=False):
+        self.transform = transform
+        self.target_transform = target_transform
+
+        # if train: 
+        data = np.load(root + "/" + 'cifar102_train.npz', allow_pickle=True)
+        # else: 
+            # data = np.load(root + "/" + 'cifar102_test.npy', allow_pickle=True).item()
+            
+        self.data = data["images"]
+        self.targets = data["labels"]
+
+    def __len__(self): 
+        return len(self.targets)
+
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
+
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+    
 class NumpyDataset(Dataset):
     def __init__(self, name: str, data_dir: str = None, transform: Optional[Callable] = None) -> None:
         self.data_dir = data_dir
@@ -64,6 +98,11 @@ def get_preprocessing(dset: str, use_aug: bool = False, train: bool = False):
     if dset.lower().startswith("cifar10"):
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2471, 0.2435, 0.2616)
+    
+    elif dset.lower().startswith("cinic10"): 
+        mean = (0.47889522, 0.47227842, 0.43047404)
+        std = (0.24205776, 0.23828046, 0.25874835)
+        
     elif dset.lower().startswith("cifar100"):
         mean = (0.5074, 0.4867, 0.4411)
         std = (0.2011, 0.1987, 0.2025)
@@ -116,6 +155,17 @@ def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
         return CIFAR10(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR100":
         return CIFAR100(data_dir, train=train, transform=transform, download=True)
+    
+    if name.lower() == "cinic10": 
+        cinic_directory = data_dir + '/CINIC-10'
+        dataset =  torchvision.datasets.ImageFolder(cinic_directory +'/'+ split, transform=transform)
+        # rand_ind = np.random.choice(len(dataset), size=(90000,), replace=False)
+        return dataset
+
+    if name == "CIFAR10v2":
+        return CIFAR10v2(data_dir, train=train, transform=transform, download=True)
+    
+    
     if name == "CIFAR10.1":
         images, labels = load_new_test_data("v6")
         return TensorDataset(
@@ -200,25 +250,22 @@ def load_new_test_data(version_string="", load_tinyimage_indices=False):
         return imagedata, labels, tinyimage_indices
 
     
-
-
-
 def get_dataset_imagenet(val_name):  
+    from torchvision import datasets
+    from torchvision.transforms import transforms
     default_data_paths = {
     'imagenet_val': '/home/jupyter/dist-shift/data/imagenet-val/',
-    'imagenet_a': '/home/jupyter/dist-shift/data/...',
-    'imagenet_r': '/home/jupyter/dist-shift/data/...',
+    'imagenet_a': '/home/jupyter/dist-shift/data/imagenet-a/',
+    'imagenet_r': '/home/jupyter/dist-shift/data/imagenet-r/',
     'imagenet_sketch': '/home/jupyter/dist-shift/data/sketch',
-    'imagenet_v2': '/home/jupyter/dist-shift/data/...'
+    'imagenet_v2': '/home/jupyter/dist-shift/data/imagenet-v2/'
     }
-    if val_name not in ['imagenet_val', 'imagenet_sketch']:
-        raise NotImplementedError()
     datapath = default_data_paths[val_name]
     test_transforms = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        #transforms.ToTensor(),
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     return datasets.ImageFolder(datapath, test_transforms)
