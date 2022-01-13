@@ -30,7 +30,7 @@ cifar10_label_names = [
 
 class NumpyDataset(Dataset):
     def __init__(
-        self, name: str, data_dir: str = None, transform: Optional[Callable] = None
+        self, name: str, data_dir: str, transform: Optional[Callable] = None
     ) -> None:
         self.data_dir = data_dir
         self.transform = transform
