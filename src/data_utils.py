@@ -258,7 +258,10 @@ def get_dataset_imagenet(val_name):
     'imagenet_a': '/home/jupyter/dist-shift/data/imagenet-a/',
     'imagenet_r': '/home/jupyter/dist-shift/data/imagenet-r/',
     'imagenet_sketch': '/home/jupyter/dist-shift/data/sketch',
-    'imagenet_v2': '/home/jupyter/dist-shift/data/imagenet-v2/'
+    'imagenet_v2': '/home/jupyter/dist-shift/data/imagenet-v2/',
+    'imagenet_vid': '/home/jupyter/dist-shift/data/imagenet_vid_ytbb_robust',
+    'imagenet_aug': '/home/jupyter/dist-shift/data/imagenet-aug/',
+    'my_data': '/home/jupyter/dist-shift/data/my_data'
     }
     datapath = default_data_paths[val_name]
     test_transforms = transforms.Compose([

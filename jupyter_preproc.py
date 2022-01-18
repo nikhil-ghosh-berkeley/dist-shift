@@ -8,11 +8,12 @@ def probs_to_softacc(probs, ytest):
     """
         probs: array-like of shape (NUM_SAMPLES, NUM_LABELS, NUM_CHECKPOINTS)
         ytest: array-like of shape (NUM_SAMPLES,)
+        return softacc: array-like of shape (NUM_SAMPLES, NUM_CHECKPOINTS)
     """
     
-    return np.array([probs[i, yi, :] for i, yi in enumerate(ytest)]).mean(0)
+    return np.array([probs[i, yi, :] for i, yi in enumerate(ytest)])
     
-def smoothen(G, xkey, Ykey, i=None, num_gridpts=50, smooth=True, sigma=2.0):
+def smoothen(G, xkey, Ykey, i=None, num_gridpts=50, smooth=True, sigma=2.0, xmin=None, xmax=None):
     """
         Returns a "standard form" for plot of single point at index i
         G : dict-like with data for a given plot group (e.g. Resnet18)
@@ -30,7 +31,15 @@ def smoothen(G, xkey, Ykey, i=None, num_gridpts=50, smooth=True, sigma=2.0):
     Y = G[Ykey] if i is None else G[Ykey][i]
     
     f = interp1d(x, Y, kind='linear')
-    x_grid = np.linspace(x.min(), x.max(), num_gridpts)
+    
+    if xmin is None:
+        xmin = np.min(x)
+    
+    if xmax is None:
+        xmax = np.max(x)
+
+        
+    x_grid = np.linspace(xmin, xmax, num_gridpts)
     Y_grid = f(x_grid)
     
     res[f'{xkey}_grid'] = x_grid

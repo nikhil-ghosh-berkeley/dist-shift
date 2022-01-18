@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib as mpl
 import seaborn as sns
 
-def stacksimple(i, x, prof, dataset, classes, topk=5, ax=None):
+def stacksimple(i, x, prof, dataset, classes, topk=5, drop_true_label=False, dpi=50, ax=None):
     """
         i: index of image in dataset
         x: x-axis points
@@ -14,12 +14,13 @@ def stacksimple(i, x, prof, dataset, classes, topk=5, ax=None):
     """
     img, true_label = dataset.__getitem__(i)
     areas = prof.sum(axis=1)
-    areas[true_label] = +np.infty # force true label to be first
+    if not drop_true_label:
+        areas[true_label] = +np.infty # force true label to be first
     ind = np.argsort(areas)[::-1] # sort labels according to their integrals
 
     label_names = [classes[idx] if j < topk else '_nolegend_' for j, idx in enumerate(ind)]
     if ax is None:
-        f, ax = plt.subplots(figsize=(9, 6))
+        f, ax = plt.subplots(figsize=(9, 6), dpi=dpi)
         # f, ax = plt.subplots(figsize=(3, 2))
     
     # colors = sns.color_palette('muted')[:topk] # first k colors: by palette
