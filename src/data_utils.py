@@ -1,21 +1,90 @@
-from torchvision.datasets import CIFAR10, CIFAR100
-import torchvision
+from torchvision.datasets import CIFAR10, CIFAR100, ImageFolder
 from torchvision import transforms
 from typing import Callable, Optional, List
-from torch.utils.data import TensorDataset, Subset
+from torch.utils.data import TensorDataset, Subset, Dataset
 import numpy as np
 import torch
-from src.simple_utils import load_pickle
+import torchvision
+
 import pathlib
 import json
-import sys
 import os
 from src.imagenet_downsampled import ImageNetDS
 from src.pacs_dataset import SketchDS
+from src.simple_utils import load_pickle
+from src.read_cifar5m import CIFAR5m
 from PIL import Image
 
-osj = os.path.join
-cifar10_label_names = ["plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+cifar10_label_names = [
+    "plane",
+    "car",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
+]
+
+class CIFAR10v2(torchvision.datasets.CIFAR10):
+    
+    def __init__(self, root, train=True, transform=None, target_transform=None,
+                 download=False):
+        self.transform = transform
+        self.target_transform = target_transform
+
+        # if train: 
+        data = np.load(root + "/" + 'cifar102_train.npz', allow_pickle=True)
+        # else: 
+            # data = np.load(root + "/" + 'cifar102_test.npy', allow_pickle=True).item()
+            
+        self.data = data["images"]
+        self.targets = data["labels"]
+
+    def __len__(self): 
+        return len(self.targets)
+
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
+
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+    
+class NumpyDataset(Dataset):
+    def __init__(
+        self, name: str, data_dir: str, transform: Optional[Callable] = None
+    ) -> None:
+        self.data_dir = data_dir
+        self.transform = transform
+        self.name = name
+
+        print(f"reading data from {os.path.abspath(data_dir)}")
+        self.data_x = np.load(os.path.join(data_dir, name + "_data.npy"))
+        self.data_y = np.load(os.path.join(data_dir, name + "_labels.npy"))
+
+    def __getitem__(self, index):
+        img, target = self.data_x[index], self.data_y[index]
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, target
+
+    def __len__(self):
+        return self.data_x.shape[0]
+
 
 class CIFAR10v2(torchvision.datasets.CIFAR10):
     
@@ -51,7 +120,8 @@ class CIFAR10v2(torchvision.datasets.CIFAR10):
         return img, target
 
 def get_index_subset(data_dir: str, idx_fname: str, full_train):
-    return Subset(full_train, load_pickle(osj(data_dir, idx_fname)))
+    return Subset(full_train, load_pickle(os.path.join(data_dir, idx_fname)))
+
 
 def get_class_subset(label: str, class_names: List[str], full_train, full_val):
     label_idx = class_names.index(label)
@@ -65,17 +135,23 @@ def get_class_subset(label: str, class_names: List[str], full_train, full_val):
     )
     return train_set, val_set
 
+
 def get_preprocessing(dset: str, use_aug: bool = False, train: bool = False):
-    if dset.startswith("Clip"):
+    # WARNING only defined for CIFAR-type datasets
+
+    if dset.lower().startswith("clip"):
         # to add
         raise NotImplementedError
 
-    if dset.startswith("CIFAR10"):
+    if dset.lower().startswith("cifar10"):
         mean = (0.4914, 0.4822, 0.4465)
         std = (0.2471, 0.2435, 0.2616)
-    elif dset.lower() == 'cifar100':
+    elif dset.lower().startswith("cifar100"):
         mean = (0.5074, 0.4867, 0.4411)
         std = (0.2011, 0.1987, 0.2025)
+    elif dset.lower().startswith("cifar5m"):
+        mean = (0.4555, 0.4362, 0.3415)
+        std = (0.2284, 0.2167, 0.2165)
     elif dset.lower().startswith("cinic10"): 
         mean = (0.47889522, 0.47227842, 0.43047404)
         std = (0.24205776, 0.23828046, 0.25874835)
@@ -104,10 +180,34 @@ def get_preprocessing(dset: str, use_aug: bool = False, train: bool = False):
 
 
 def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
-    name, split = dset.rsplit("_", 1)
-    assert split in ["train", "test"]
-    train = (split == "train")
+    splitted = dset.rsplit("_", 1)
+    name = splitted[0]
 
+    # check if dset is of the form *_test or *_train
+    has_partition = len(splitted) == 2 and (splitted[1] in ["train", "test"])
+
+    if not has_partition:
+        if name == "CIFAR5m":
+            return CIFAR5m(data_dir=None, transform=transform)
+        elif name in ["CIFAR10-easy", "CIFAR10-hard", "CIFAR10-neg", "CIFAR10-neg-bal"]:
+            return NumpyDataset(name, data_dir=data_dir, transform=transform)
+        else:
+            raise ValueError("Error invalid dataset name %s" % name)
+
+    split = splitted[1]
+    train = split == "train"
+    
+    if name.lower() == "cinic10": 
+        cinic_directory = data_dir + '/CINIC-10'
+        dataset =  torchvision.datasets.ImageFolder(cinic_directory +'/'+ split, transform=transform)
+        # rand_ind = np.random.choice(len(dataset), size=(90000,), replace=False)
+        # return Subset(dataset, rand_ind)
+        return dataset 
+    
+    # Get dataset from https://github.com/modestyachts/cifar-10.2
+    if name == "CIFAR10v2":
+        return CIFAR10v2(data_dir, train=train, transform=transform, download=True)
+    
     if name == "CIFAR10":
         return CIFAR10(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR100":
@@ -204,3 +304,26 @@ def load_new_test_data(version_string="", load_tinyimage_indices=False):
         assert type(tinyimage_indices) is list
         assert len(tinyimage_indices) == labels.shape[0]
         return imagedata, labels, tinyimage_indices
+
+
+def get_dataset_imagenet(val_name):
+    default_data_paths = {
+        "imagenet_val": "/home/jupyter/dist-shift/data/imagenet-val/",
+        "imagenet_a": "/home/jupyter/dist-shift/data/...",
+        "imagenet_r": "/home/jupyter/dist-shift/data/...",
+        "imagenet_sketch": "/home/jupyter/dist-shift/data/sketch",
+        "imagenet_v2": "/home/jupyter/dist-shift/data/...",
+    }
+    if val_name not in ["imagenet_val", "imagenet_sketch"]:
+        raise NotImplementedError()
+    datapath = default_data_paths[val_name]
+    test_transforms = transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+    return ImageFolder(datapath, test_transforms)

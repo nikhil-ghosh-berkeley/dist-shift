@@ -1,41 +1,49 @@
+from typing import Callable, Optional
 import numpy as np
+from PIL import Image
 from torch.utils.data import Dataset
+import os
 
-mean = np.array([0.4555, 0.4362, 0.3415])[None, None, None, :]
-std = np.array([.2284, .2167, .2165])[None, None, None, :]
+class CIFAR5m(Dataset):
+    def __init__(self, data_dir: str = None, transform: Optional[Callable] = None) -> None:
+        self.transform = transform
 
+        if data_dir is None:
+            data_dir = "/n/holystore01/LABS/barak_lab/Everyone/cifar-5m"
+        print(f"reading cifar 5m data from {data_dir}")
 
-class BasicDataset(Dataset):
-    def __init__(self, data_x, data_y):
-        super().__init__()
-        self.data_x = data_x
-        self.data_y = data_y
+        class_files = []
+        class_labels = []
+
+        num_classes = 10
+        min_len = 509716
+
+        for i in range(num_classes):
+            print("reading class %d" % i)
+            file_name = f"{data_dir}/class{i}.npy"
+            curr_data = np.load(file_name)
+            class_files.append(curr_data[:min_len, ...])
+            class_labels.append(i * np.ones(min_len, dtype=int))
+
+        self.data_x = np.concatenate(class_files)
+        self.data_y = np.concatenate(class_labels)
 
     def __getitem__(self, index):
-        return self.data_x[index], self.data_y[index]
+        img, target = self.data_x[index], self.data_y[index]
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, target
 
     def __len__(self):
         return self.data_x.shape[0]
 
+    def extract_subset(self, data_dir: str, idx: np.ndarray, subset_name: str):
+        data_x = self.data_x[idx, ...]
+        data_y = self.data_y[idx]
 
-def get_dataset(data_path=None):
-    if data_path is None:
-        data_path = '/n/holystore01/LABS/barak_lab/Everyone/cifar-5m'
-    print(f'reading cifar 5m data from {data_path}')
-    class_files = []
-    class_labels = []
-    min_len = np.inf
-    for i in range(10):
-        file_name = f'{data_path}/class{i}.npy'
-        curr_data = np.load(file_name)
-        class_files += [curr_data]
-        class_labels += [i * np.ones(curr_data.shape[0])]
-        min_len = np.min(min_len, curr_data.shape[0])
+        np.save(os.path.join(data_dir, subset_name + "_data.npy"), data_x)
+        np.save(os.path.join(data_dir, subset_name + "_labels.npy"), data_y)
 
-    for i in range(10):
-        class_files[i] = class_files[i][:min_len]
-
-    x = np.array((np.concatenate(class_files) / 255. - mean) / std)
-    y = np.array((np.concatenate(class_labels)))
-
-    return BasicDataset(x, y)

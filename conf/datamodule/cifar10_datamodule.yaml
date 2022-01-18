@@ -2,6 +2,7 @@ _target_: src.datamodules.DataModule
 train_name: CIFAR10_train
 data_dir: ${data_dir} 
 val_names: ${val_names}
+num_workers: ${num_workers}
 use_aug: True
 batch_size: 128
 n: null

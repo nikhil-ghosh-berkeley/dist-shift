@@ -6,14 +6,12 @@ from scipy.special import softmax
 import time
 from os.path import join
 
-
 # compute average and std statistics over random trials
-def average(pred_dirs, pred_base="predictions", raw_dir="raw", avg_dir="avg"):
+def average(workdir, pred_dirs, pred_base="predictions", raw_dir="raw", avg_dir="avg"):
     print("starting averaging")
     start_time = time.time()
     for pred_dir in pred_dirs:
-        print(pred_dir)
-        raw_path = join(pred_base, pred_dir, raw_dir)
+        raw_path = join(workdir, pred_base, pred_dir, raw_dir)
         file_list = list_files(raw_path)
         for file in file_list:
             print(file)
@@ -56,7 +54,7 @@ def average(pred_dirs, pred_base="predictions", raw_dir="raw", avg_dir="avg"):
             avg_dct["dset_mean"] = np.mean(dct["dset"])
             avg_dct["dset_sem"] = np.std(dct["dset"]) / np.sqrt(len(dct["dset"]))
 
-            avg_path = join(pred_base, pred_dir, avg_dir)
+            avg_path = join(workdir, pred_base, pred_dir, avg_dir)
             if not os.path.isdir(avg_path):
                 os.mkdir(avg_path)
             dump_pickle(avg_dct, join(avg_path, file))

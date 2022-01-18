@@ -14,18 +14,18 @@ def arch_plot_group(hash: str, hash_dict: Dict) -> str:
 
 # plot_groups[name][pg] contains ordered list of file names (name, hash, epoch, step)
 # such that plot_group(hash) = pg. (ex: name = CIFAR10_test and pg = Resnet18)
-def collect_and_sort(pred_dirs, plot_group, pred_base="predictions", avg_dir="avg"):
+def collect_and_sort(workdir, pred_dirs, plot_group, pred_base="predictions", avg_dir="avg"):
     pred_dirs = sorted(pred_dirs)
 
     # collect all full raw dictionary paths
     file_list = []
     for pred_dir in pred_dirs:
-        avg_path = join(pred_base, pred_dir, avg_dir)
+        avg_path = join(workdir, pred_base, pred_dir, avg_dir)
         file_list.extend([join(avg_path, file) for file in list_files(avg_path)])
 
     # collect all hash_dict items from each pred_dir
     hash_dicts = [
-        load_pickle(join(pred_base, pred_dir, "hash_dict.pkl")) for pred_dir in pred_dirs
+        load_pickle(join(workdir, pred_base, pred_dir, "hash_dict.pkl")) for pred_dir in pred_dirs
     ]
     hash_dict = {k: v for dct in hash_dicts for k, v in dct.items()}
 
@@ -54,9 +54,10 @@ def collect_and_sort(pred_dirs, plot_group, pred_base="predictions", avg_dir="av
 
 # utilities for grouping averaged data together for plotting
 # plot_group is a function taking hash and outputting plot group (str)
-def group(pred_dirs, plot_group, pred_base="predictions", avg_dir="avg", proc_dir="processed"):
+def group(workdir, pred_dirs, plot_group, pred_base="predictions", avg_dir="avg", proc_dir="processed"):
+    print("grouping")
     pred_dirs = sorted(pred_dirs)
-    plot_groups = collect_and_sort(pred_dirs, plot_group, pred_base, avg_dir)
+    plot_groups = collect_and_sort(workdir, pred_dirs, plot_group, pred_base, avg_dir)
 
     # group averaged data together
     grouped = dict()
@@ -133,6 +134,7 @@ def group(pred_dirs, plot_group, pred_base="predictions", avg_dir="avg", proc_di
                 grouped[name][pg]["probs"] = probs
                 grouped[name][pg]["freqs"] = np.concatenate(freqs, -1)
 
-    if not os.path.isdir(proc_dir):
-        os.mkdir(proc_dir)
-    dump_pickle(grouped, join(proc_dir, "+".join(pred_dirs) + ".pkl"))
+    if not os.path.isdir(join(workdir, proc_dir)):
+        os.mkdir(join(workdir, proc_dir))
+    dump_pickle(grouped, join(workdir, proc_dir, "+".join(pred_dirs) + ".pkl"))
+    print("done")

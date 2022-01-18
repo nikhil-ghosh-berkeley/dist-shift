@@ -3,7 +3,6 @@ from torch.utils.data import DataLoader
 from typing import Optional, List, Callable
 from torch.utils.data import Subset
 import numpy as np
-from torchvision.transforms import transforms
 
 from src.data_utils import get_dataset, get_preprocessing
 
@@ -17,6 +16,7 @@ class DataModule(pl.LightningDataModule):
         batch_size: int = 128,
         use_aug: bool = False,
         n: Optional[int] = None,
+        num_workers: int = 1,
     ):
         super().__init__()
         self.train_name = train_name
@@ -25,10 +25,11 @@ class DataModule(pl.LightningDataModule):
         self.use_aug = use_aug
         self.n = n
         self.val_names = val_names
+        self.num_workers = num_workers
 
         self.train_transform = get_preprocessing(train_name, use_aug, train=True)
         self.test_transforms = [
-            get_preprocessing(val_name, use_aug, train=False) for val_name in val_names
+            get_preprocessing(train_name, use_aug, train=False) for _ in val_names
         ]
 
     def setup(self, stage: Optional[str] = None):
@@ -60,14 +61,14 @@ class DataModule(pl.LightningDataModule):
             self.train_set,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=4,
+            num_workers=self.num_workers,
             pin_memory=True,
         )
 
     def val_dataloader(self):
         return [
             DataLoader(
-                val_set, batch_size=512, shuffle=False, num_workers=4, pin_memory=True
+                val_set, batch_size=512, shuffle=False, num_workers=self.num_workers, pin_memory=True
             )
             for val_set in self.val_sets
         ]
