@@ -27,7 +27,39 @@ cifar10_label_names = [
     "truck",
 ]
 
+class CIFAR10v2(torchvision.datasets.CIFAR10):
+    
+    def __init__(self, root, train=True, transform=None, target_transform=None,
+                 download=False):
+        self.transform = transform
+        self.target_transform = target_transform
 
+        # if train: 
+        data = np.load(root + "/" + 'cifar102_train.npz', allow_pickle=True)
+        # else: 
+            # data = np.load(root + "/" + 'cifar102_test.npy', allow_pickle=True).item()
+            
+        self.data = data["images"]
+        self.targets = data["labels"]
+
+    def __len__(self): 
+        return len(self.targets)
+
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
+
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+    
 class NumpyDataset(Dataset):
     def __init__(
         self, name: str, data_dir: str, transform: Optional[Callable] = None
@@ -86,6 +118,9 @@ def get_preprocessing(dset: str, use_aug: bool = False, train: bool = False):
     elif dset.lower().startswith("cifar5m"):
         mean = (0.4555, 0.4362, 0.3415)
         std = (0.2284, 0.2167, 0.2165)
+    elif dset.lower().startswith("cinic10"): 
+        mean = (0.47889522, 0.47227842, 0.43047404)
+        std = (0.24205776, 0.23828046, 0.25874835)
     else:
         mean = (0.5, 0.5, 0.5)
         std = (0.5, 0.5, 0.5)
@@ -127,7 +162,18 @@ def get_dataset(data_dir: str, dset: str, transform: Optional[Callable] = None):
 
     split = splitted[1]
     train = split == "train"
-
+    
+    if name.lower() == "cinic10": 
+        cinic_directory = data_dir + '/CINIC-10'
+        dataset =  torchvision.datasets.ImageFolder(cinic_directory +'/'+ split, transform=transform)
+        # rand_ind = np.random.choice(len(dataset), size=(90000,), replace=False)
+        # return Subset(dataset, rand_ind)
+        return dataset 
+    
+    # Get dataset from https://github.com/modestyachts/cifar-10.2
+    if name == "CIFAR10v2":
+        return CIFAR10v2(data_dir, train=train, transform=transform, download=True)
+    
     if name == "CIFAR10":
         return CIFAR10(data_dir, train=train, transform=transform, download=True)
     if name == "CIFAR100":
