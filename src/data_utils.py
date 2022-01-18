@@ -4,6 +4,7 @@ from typing import Callable, Optional, List
 from torch.utils.data import TensorDataset, Subset, Dataset
 import numpy as np
 import torch
+import torchvision
 
 import pathlib
 import json
